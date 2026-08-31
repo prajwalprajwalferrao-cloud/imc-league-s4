@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-pitch: #0B0E14;
+  --bg-card: #141923;
+  --bg-card-hover: #1D2432;
+  --gold-primary: #E5A93C;
+  --gold-bright: #FFC857;
+  --gold-glow: rgba(229, 169, 60, 0.25);
+  --live-red: #FF3B30;
+}
+
+body {
+  background-color: var(--bg-pitch);
+  color: #F3F4F6;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Gold glow utilities */
+.glow-gold {
+  box-shadow: 0 0 25px var(--gold-glow);
+}
+
+.glow-live {
+  box-shadow: 0 0 20px rgba(255, 59, 48, 0.4);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0E14;
+}
+::-webkit-scrollbar-thumb {
+  background: #2A3447;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E5A93C;
+}
+
+/* Pulse animation for live badge */
+@keyframes pulse-red {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+.animate-pulse-live {
+  animation: pulse-red 1.8s infinite ease-in-out;
+}
