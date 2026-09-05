@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getTeams, softDeleteTeam } from '@/lib/firestore/teams';
+import { getTeams, softDeleteTeam } from '@/lib/supabase/teams';
 import { Team } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -76,10 +76,10 @@ export default function AdminTeamsList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8 rounded-full border-2 border-[#232B3E] bg-[#0B0E14] flex items-center justify-center overflow-hidden">
-                          {team.logoUrl ? (
-                            <img src={team.logoUrl} alt={team.name} className="h-full w-full object-cover" />
+                          {team.logo_url ? (
+                            <img src={team.logo_url} alt={team.name} className="h-full w-full object-cover" />
                           ) : (
-                            <span className="text-xs font-bold" style={{ color: team.colour || '#fff' }}>{team.shortName}</span>
+                            <span className="text-xs font-bold" style={{ color: team.colour || '#fff' }}>{team.short_name}</span>
                           )}
                         </div>
                         <div className="ml-4">
@@ -88,7 +88,7 @@ export default function AdminTeamsList() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {team.shortName}
+                      {team.short_name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                       {team.captain || 'Not set'}

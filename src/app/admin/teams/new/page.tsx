@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createTeam } from '@/lib/firestore/teams';
+import { createTeam } from '@/lib/supabase/teams';
 import toast from 'react-hot-toast';
 
 export default function NewTeamPage() {
@@ -11,12 +11,12 @@ export default function NewTeamPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    shortName: '',
+    short_name: '',
     colour: '#E5A93C',
     captain: '',
     manager: '',
-    logoUrl: '',
-    seasonId: 'season-4', // Hardcoded for now
+    logo_url: '',
+    season_id: 'season-4', // Hardcoded for now
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,7 +26,7 @@ export default function NewTeamPage() {
     try {
       await createTeam({
         ...formData,
-        isDeleted: false,
+        is_deleted: false,
       });
       toast.success('Team created successfully!');
       router.push('/admin/teams');
@@ -65,8 +65,8 @@ export default function NewTeamPage() {
                 type="text"
                 required
                 maxLength={4}
-                value={formData.shortName}
-                onChange={(e) => setFormData({...formData, shortName: e.target.value.toUpperCase()})}
+                value={formData.short_name}
+                onChange={(e) => setFormData({...formData, short_name: e.target.value.toUpperCase()})}
                 className="w-full bg-[#0B0E14] border border-[#2D384E] rounded-md px-4 py-2 text-white focus:outline-none focus:border-[#E5A93C] uppercase"
                 placeholder="e.g. RCB"
               />
@@ -89,8 +89,8 @@ export default function NewTeamPage() {
               <label className="block text-sm font-bold text-gray-300">Logo URL (Optional)</label>
               <input
                 type="url"
-                value={formData.logoUrl}
-                onChange={(e) => setFormData({...formData, logoUrl: e.target.value})}
+                value={formData.logo_url}
+                onChange={(e) => setFormData({...formData, logo_url: e.target.value})}
                 className="w-full bg-[#0B0E14] border border-[#2D384E] rounded-md px-4 py-2 text-white focus:outline-none focus:border-[#E5A93C]"
                 placeholder="https://..."
               />

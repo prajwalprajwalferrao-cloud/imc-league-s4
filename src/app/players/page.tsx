@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getPlayers } from '@/lib/firestore/players';
-import { getTeams } from '@/lib/firestore/teams';
+import { getPlayers } from '@/lib/supabase/players';
+import { getTeams } from '@/lib/supabase/teams';
 import { Player, Team } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
@@ -61,22 +61,22 @@ export default function PlayersPage() {
           <div key={player.id} className="bg-[#141923] border border-[#232B3E] rounded-xl overflow-hidden hover:border-[#E5A93C]/50 transition-colors group">
             <div className="p-4 flex items-start justify-between">
               <div className="flex-shrink-0 w-16 h-16 rounded-full bg-[#0B0E14] border-2 border-[#2D384E] flex items-center justify-center overflow-hidden">
-                {player.photoUrl ? (
-                  <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover" />
+                {player.photo_url ? (
+                  <img src={player.photo_url} alt={player.name} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-2xl">👤</span>
                 )}
               </div>
               <div className="text-right">
                 <span className="text-2xl font-black text-[#E5A93C]/20 group-hover:text-[#E5A93C]/40 transition-colors">
-                  {player.jerseyNumber.toString().padStart(2, '0')}
+                  {player.jersey_number.toString().padStart(2, '0')}
                 </span>
               </div>
             </div>
             
             <div className="px-4 pb-4">
               <h3 className="text-lg font-bold text-white truncate">{player.name}</h3>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{teams[player.teamId]?.name || 'TBA'}</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{teams[player.team_id]?.name || 'TBA'}</p>
               
               <div className="mt-4 pt-4 border-t border-[#232B3E] flex justify-between text-xs">
                 <div>
@@ -85,7 +85,7 @@ export default function PlayersPage() {
                 </div>
                 <div className="text-right">
                   <span className="block text-gray-500 uppercase font-black text-[10px]">Stats</span>
-                  <span className="font-bold text-white">{player.runsScored} R / {player.wicketsTaken} W</span>
+                  <span className="font-bold text-white">{player.runs_scored} R / {player.wickets_taken} W</span>
                 </div>
               </div>
             </div>

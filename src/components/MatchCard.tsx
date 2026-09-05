@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Match, Team } from '@/lib/types';
-import { getTeams } from '@/lib/firestore/teams';
+import { getTeams } from '@/lib/supabase/teams';
 import { useEffect, useState } from 'react';
 import { formatScore, getMatchResult } from '@/lib/matchUtils';
 
@@ -17,16 +17,16 @@ export default function MatchCard({ match, showDetails = true }: Props) {
     // In a real app we'd fetch teams globally or pass them in to avoid N+1 queries.
     // Doing it here for component independence.
     getTeams().then(teams => {
-      setHomeTeam(teams.find(t => t.id === match.homeTeamId) || null);
-      setAwayTeam(teams.find(t => t.id === match.awayTeamId) || null);
+      setHomeTeam(teams.find(t => t.id === match.home_team_id) || null);
+      setAwayTeam(teams.find(t => t.id === match.away_team_id) || null);
     });
-  }, [match.homeTeamId, match.awayTeamId]);
+  }, [match.home_team_id, match.away_team_id]);
 
-  const homeScoreStr = formatScore(match.homeScore, match.homeWickets, match.status === 'Completed' ? undefined : match.homeOvers);
-  const awayScoreStr = formatScore(match.awayScore, match.awayWickets, match.status === 'Completed' ? undefined : match.awayOvers);
+  const homeScoreStr = formatScore(match.home_score, match.home_wickets, match.status === 'Completed' ? undefined : match.home_overs);
+  const awayScoreStr = formatScore(match.away_score, match.away_wickets, match.status === 'Completed' ? undefined : match.away_overs);
   
   const resultText = match.status === 'Completed' && homeTeam && awayTeam
-    ? getMatchResult(match, homeTeam.shortName, awayTeam.shortName)
+    ? getMatchResult(match, homeTeam.short_name, awayTeam.short_name)
     : '';
 
   return (
@@ -53,14 +53,14 @@ export default function MatchCard({ match, showDetails = true }: Props) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-6 h-6 rounded-full bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden">
-                {homeTeam?.logoUrl ? <img src={homeTeam.logoUrl} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] font-bold text-white">{homeTeam?.shortName}</span>}
+                {homeTeam?.logo_url ? <img src={homeTeam.logo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] font-bold text-white">{homeTeam?.short_name}</span>}
               </div>
-              <span className={`font-bold text-sm ${match.status === 'Completed' && match.homeScore > match.awayScore ? 'text-white' : 'text-gray-300'}`}>
+              <span className={`font-bold text-sm ${match.status === 'Completed' && match.home_score > match.away_score ? 'text-white' : 'text-gray-300'}`}>
                 {homeTeam?.name || 'TBA'}
               </span>
             </div>
             {(match.status === 'Live' || match.status === 'Completed') && (
-              <span className={`font-mono text-sm font-bold ${match.status === 'Completed' && match.homeScore > match.awayScore ? 'text-white' : 'text-gray-400'}`}>
+              <span className={`font-mono text-sm font-bold ${match.status === 'Completed' && match.home_score > match.away_score ? 'text-white' : 'text-gray-400'}`}>
                 {homeScoreStr}
               </span>
             )}
@@ -70,14 +70,14 @@ export default function MatchCard({ match, showDetails = true }: Props) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-6 h-6 rounded-full bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden">
-                {awayTeam?.logoUrl ? <img src={awayTeam.logoUrl} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] font-bold text-white">{awayTeam?.shortName}</span>}
+                {awayTeam?.logo_url ? <img src={awayTeam.logo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] font-bold text-white">{awayTeam?.short_name}</span>}
               </div>
-              <span className={`font-bold text-sm ${match.status === 'Completed' && match.awayScore > match.homeScore ? 'text-white' : 'text-gray-300'}`}>
+              <span className={`font-bold text-sm ${match.status === 'Completed' && match.away_score > match.home_score ? 'text-white' : 'text-gray-300'}`}>
                 {awayTeam?.name || 'TBA'}
               </span>
             </div>
             {(match.status === 'Live' || match.status === 'Completed') && (
-              <span className={`font-mono text-sm font-bold ${match.status === 'Completed' && match.awayScore > match.homeScore ? 'text-white' : 'text-gray-400'}`}>
+              <span className={`font-mono text-sm font-bold ${match.status === 'Completed' && match.away_score > match.home_score ? 'text-white' : 'text-gray-400'}`}>
                 {awayScoreStr}
               </span>
             )}

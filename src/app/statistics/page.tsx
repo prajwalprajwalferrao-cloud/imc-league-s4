@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getPlayers } from '@/lib/firestore/players';
-import { getTeams } from '@/lib/firestore/teams';
+import { getPlayers } from '@/lib/supabase/players';
+import { getTeams } from '@/lib/supabase/teams';
 import { Player, Team } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
@@ -30,8 +30,8 @@ export default function StatisticsPage() {
 
   if (loading) return <div className="py-12"><LoadingSpinner size="lg" /></div>;
 
-  const topScorers = [...players].sort((a, b) => b.runsScored - a.runsScored).slice(0, 10);
-  const topWicketTakers = [...players].sort((a, b) => b.wicketsTaken - a.wicketsTaken).slice(0, 10);
+  const topScorers = [...players].sort((a, b) => b.runs_scored - a.runs_scored).slice(0, 10);
+  const topWicketTakers = [...players].sort((a, b) => b.wickets_taken - a.wickets_taken).slice(0, 10);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
@@ -61,9 +61,9 @@ export default function StatisticsPage() {
                     <td className="px-6 py-3 whitespace-nowrap text-sm font-bold text-gray-400">{index + 1}</td>
                     <td className="px-6 py-3 whitespace-nowrap">
                       <div className="text-sm font-bold text-white">{player.name}</div>
-                      <div className="text-xs text-gray-500">{teams[player.teamId]?.shortName || 'TBA'}</div>
+                      <div className="text-xs text-gray-500">{teams[player.team_id]?.short_name || 'TBA'}</div>
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-center text-sm font-black text-[#E5A93C]">{player.runsScored}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-center text-sm font-black text-[#E5A93C]">{player.runs_scored}</td>
                   </tr>
                 ))}
                 {topScorers.length === 0 && (
@@ -94,9 +94,9 @@ export default function StatisticsPage() {
                     <td className="px-6 py-3 whitespace-nowrap text-sm font-bold text-gray-400">{index + 1}</td>
                     <td className="px-6 py-3 whitespace-nowrap">
                       <div className="text-sm font-bold text-white">{player.name}</div>
-                      <div className="text-xs text-gray-500">{teams[player.teamId]?.shortName || 'TBA'}</div>
+                      <div className="text-xs text-gray-500">{teams[player.team_id]?.short_name || 'TBA'}</div>
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-center text-sm font-black text-[#E5A93C]">{player.wicketsTaken}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-center text-sm font-black text-[#E5A93C]">{player.wickets_taken}</td>
                   </tr>
                 ))}
                 {topWicketTakers.length === 0 && (

@@ -1,88 +1,73 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 
-export default function AdminLoginPage() {
+export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn } = useAuth();
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     
-    try {
-      await signIn(email, password);
-      // Set a cookie so the middleware knows we're authenticated
-      document.cookie = "imc-auth=true; path=/; max-age=86400; SameSite=Strict";
-      
-      const redirect = searchParams.get('redirect') || '/admin';
-      router.push(redirect);
+    if (error) {
+      toast.error('Invalid credentials');
+      setLoading(false);
+    } else {
       toast.success('Logged in successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to login');
-      setIsSubmitting(false);
+      router.push('/admin');
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0E14] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-white uppercase tracking-wider">
-          Admin Login
-        </h2>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-[#141923] py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-[#232B3E]">
-          <form className="space-y-6" onSubmit={handleLogin}>
-            <div>
-              <label className="block text-sm font-medium text-gray-300">
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-[#2D384E] rounded-md shadow-sm bg-[#0B0E14] text-white focus:outline-none focus:ring-[#E5A93C] focus:border-[#E5A93C] sm:text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300">
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-[#2D384E] rounded-md shadow-sm bg-[#0B0E14] text-white focus:outline-none focus:ring-[#E5A93C] focus:border-[#E5A93C] sm:text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-[#E5A93C] hover:bg-[#D49B35] focus:outline-none disabled:opacity-50"
-              >
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
-              </button>
-            </div>
-          </form>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#0B0E14]">
+      <div className="max-w-md w-full space-y-8 bg-[#141923] p-8 rounded-xl border border-[#232B3E]">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-black text-white uppercase tracking-tight">Admin <span className="text-[#E5A93C]">Access</span></h2>
+          <p className="mt-2 text-sm text-gray-400">Sign in to manage the league</p>
         </div>
+        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          <div className="space-y-4 rounded-md shadow-sm">
+            <div>
+              <input
+                type="email"
+                required
+                className="appearance-none rounded relative block w-full px-3 py-2 border border-[#2D384E] bg-[#0B0E14] text-white focus:outline-none focus:border-[#E5A93C] sm:text-sm"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <input
+                type="password"
+                required
+                className="appearance-none rounded relative block w-full px-3 py-2 border border-[#2D384E] bg-[#0B0E14] text-white focus:outline-none focus:border-[#E5A93C] sm:text-sm"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-bold rounded-md text-black bg-[#E5A93C] hover:bg-[#FFC857] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E5A93C] uppercase tracking-wider disabled:opacity-50"
+            >
+              {loading ? 'Authenticating...' : 'Sign In'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

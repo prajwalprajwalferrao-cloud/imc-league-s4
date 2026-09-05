@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createPlayer, checkDuplicateJersey } from '@/lib/firestore/players';
-import { getTeams } from '@/lib/firestore/teams';
+import { createPlayer, checkDuplicateJersey } from '@/lib/supabase/players';
+import { getTeams } from '@/lib/supabase/teams';
 import { Team, PlayerPosition } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -16,10 +16,10 @@ export default function NewPlayerPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    teamId: '',
-    jerseyNumber: '',
+    team_id: '',
+    jersey_number: '',
     position: 'Batsman' as PlayerPosition,
-    photoUrl: '',
+    photo_url: '',
   });
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function NewPlayerPage() {
       try {
         const t = await getTeams();
         setTeams(t);
-        if (t.length > 0) setFormData(f => ({ ...f, teamId: t[0].id }));
+        if (t.length > 0) setFormData(f => ({ ...f, team_id: t[0].id }));
       } catch (err) {
         toast.error('Failed to load teams');
       } finally {
@@ -39,7 +39,7 @@ export default function NewPlayerPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.teamId) {
+    if (!formData.team_id) {
       toast.error('Please select a team');
       return;
     }
@@ -47,8 +47,8 @@ export default function NewPlayerPage() {
     setIsSubmitting(true);
     
     try {
-      const jersey = parseInt(formData.jerseyNumber);
-      const isDuplicate = await checkDuplicateJersey(formData.teamId, jersey);
+      const jersey = parseInt(formData.jersey_number);
+      const isDuplicate = await checkDuplicateJersey(formData.team_id, jersey);
       if (isDuplicate) {
         toast.error(`Jersey number ${jersey} is already taken in this team`);
         setIsSubmitting(false);
@@ -57,21 +57,21 @@ export default function NewPlayerPage() {
       
       await createPlayer({
         name: formData.name,
-        teamId: formData.teamId,
-        jerseyNumber: jersey,
+        team_id: formData.team_id,
+        jersey_number: jersey,
         position: formData.position,
-        photoUrl: formData.photoUrl,
-        seasonId: 'season-4',
-        runsScored: 0,
-        ballsFaced: 0,
-        wicketsTaken: 0,
-        oversBowled: 0,
-        runsConceded: 0,
+        photo_url: formData.photo_url,
+        season_id: 'season-4',
+        runs_scored: 0,
+        balls_faced: 0,
+        wickets_taken: 0,
+        overs_bowled: 0,
+        runs_conceded: 0,
         catches: 0,
-        runOuts: 0,
+        run_outs: 0,
         appearances: 0,
         motm: 0,
-        isActive: true
+        is_active: true
       });
       
       toast.success('Player registered successfully!');
@@ -109,8 +109,8 @@ export default function NewPlayerPage() {
               <label className="block text-sm font-bold text-gray-300">Team *</label>
               <select
                 required
-                value={formData.teamId}
-                onChange={(e) => setFormData({...formData, teamId: e.target.value})}
+                value={formData.team_id}
+                onChange={(e) => setFormData({...formData, team_id: e.target.value})}
                 className="w-full bg-[#0B0E14] border border-[#2D384E] rounded-md px-4 py-2 text-white focus:outline-none focus:border-[#E5A93C]"
               >
                 {teams.map(t => (
@@ -126,8 +126,8 @@ export default function NewPlayerPage() {
                 required
                 min="0"
                 max="99"
-                value={formData.jerseyNumber}
-                onChange={(e) => setFormData({...formData, jerseyNumber: e.target.value})}
+                value={formData.jersey_number}
+                onChange={(e) => setFormData({...formData, jersey_number: e.target.value})}
                 className="w-full bg-[#0B0E14] border border-[#2D384E] rounded-md px-4 py-2 text-white focus:outline-none focus:border-[#E5A93C]"
               />
             </div>
@@ -151,8 +151,8 @@ export default function NewPlayerPage() {
               <label className="block text-sm font-bold text-gray-300">Photo URL (Optional)</label>
               <input
                 type="url"
-                value={formData.photoUrl}
-                onChange={(e) => setFormData({...formData, photoUrl: e.target.value})}
+                value={formData.photo_url}
+                onChange={(e) => setFormData({...formData, photo_url: e.target.value})}
                 className="w-full bg-[#0B0E14] border border-[#2D384E] rounded-md px-4 py-2 text-white focus:outline-none focus:border-[#E5A93C]"
                 placeholder="https://..."
               />

@@ -43,15 +43,15 @@ export default function StandingsTable({ standings, limit }: Props) {
                   <td className="px-4 py-3 whitespace-nowrap">
                     <Link href={`/teams/${row.team.id}`} className="flex items-center group-hover:text-[#E5A93C] transition-colors">
                       <div className="flex-shrink-0 h-6 w-6 rounded-full border border-[#2D384E] bg-[#0B0E14] overflow-hidden flex items-center justify-center">
-                        {row.team.logoUrl ? (
-                          <img src={row.team.logoUrl} alt="" className="h-full w-full object-cover" />
+                        {row.team.logo_url ? (
+                          <img src={row.team.logo_url} alt="" className="h-full w-full object-cover" />
                         ) : (
-                          <span className="text-[8px] font-bold" style={{ color: row.team.colour || '#fff' }}>{row.team.shortName}</span>
+                          <span className="text-[8px] font-bold" style={{ color: row.team.colour || '#fff' }}>{row.team.short_name}</span>
                         )}
                       </div>
                       <div className="ml-3">
                         <span className="text-sm font-bold text-white hidden sm:block">{row.team.name}</span>
-                        <span className="text-sm font-bold text-white sm:hidden">{row.team.shortName}</span>
+                        <span className="text-sm font-bold text-white sm:hidden">{row.team.short_name}</span>
                       </div>
                     </Link>
                   </td>

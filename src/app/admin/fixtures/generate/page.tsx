@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getTeams } from '@/lib/firestore/teams';
-import { createMatch, getMatches } from '@/lib/firestore/matches';
+import { getTeams } from '@/lib/supabase/teams';
+import { createMatch, getMatches } from '@/lib/supabase/matches';
 import { generateFixtures } from '@/lib/fixtureGenerator';
 import { Team } from '@/lib/types';
 import toast from 'react-hot-toast';

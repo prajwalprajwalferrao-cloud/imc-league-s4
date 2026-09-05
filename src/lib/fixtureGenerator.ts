@@ -8,74 +8,76 @@ export function generateFixtures(
   timeSlots: string[],
   seasonId: string,
   matchesPerDay: number
-): Omit<Match, 'id' | 'createdAt' | 'updatedAt'>[] {
+): Partial<Match>[] {
+  const fixtures: Partial<Match>[] = [];
+  const totalTeams = teamIds.length;
   
-  if (teamIds.length < 2) return [];
+  if (totalTeams < 2) return [];
 
   const teams = [...teamIds];
-  if (teams.length % 2 !== 0) {
+  if (totalTeams % 2 !== 0) {
     teams.push('BYE');
   }
 
   const numTeams = teams.length;
   const numRounds = numTeams - 1;
   const matchesPerRound = numTeams / 2;
-  
-  const fixtures: Omit<Match, 'id' | 'createdAt' | 'updatedAt'>[] = [];
-  let currentDate = new Date(startDate);
-  let matchesAddedToDay = 0;
 
-  for (let r = 0; r < numRounds; r++) {
-    for (let m = 0; m < matchesPerRound; m++) {
-      const home = (r + m) % (numTeams - 1);
-      let away = (numTeams - 1 - m + r) % (numTeams - 1);
-      
-      if (m === 0) {
-        away = numTeams - 1;
-      }
-      
-      if (teams[home] !== 'BYE' && teams[away] !== 'BYE') {
-        const timeSlotIndex = matchesAddedToDay % timeSlots.length;
-        
-        fixtures.push({
-          seasonId,
-          round: r + 1,
-          homeTeamId: teams[home],
-          awayTeamId: teams[away],
-          homeScore: 0,
-          homeWickets: 0,
-          homeOvers: 0,
-          awayScore: 0,
-          awayWickets: 0,
-          awayOvers: 0,
-          battingFirstTeamId: null,
-          tossWinnerId: null,
-          status: 'Upcoming',
-          venue,
-          date: currentDate.toISOString().split('T')[0],
-          time: timeSlots[timeSlotIndex],
-          notes: ''
-        });
-        
-        matchesAddedToDay++;
-        if (matchesAddedToDay >= matchesPerDay) {
-          matchesAddedToDay = 0;
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-      }
+  let currentDate = new Date(startDate);
+  let matchCounter = 0;
+  let currentRound = 1;
+
+  const addFixture = (home: string, away: string, round: number) => {
+    if (home === 'BYE' || away === 'BYE') return;
+
+    const timeIndex = matchCounter % timeSlots.length;
+    
+    fixtures.push({
+      season_id: seasonId,
+      round,
+      home_team_id: home,
+      away_team_id: away,
+      home_score: 0,
+      home_wickets: 0,
+      home_overs: 0,
+      away_score: 0,
+      away_wickets: 0,
+      away_overs: 0,
+      status: 'Upcoming',
+      venue,
+      date: currentDate.toISOString().split('T')[0],
+      time: timeSlots[timeIndex]
+    });
+
+    matchCounter++;
+    if (matchCounter >= matchesPerDay) {
+      matchCounter = 0;
+      currentDate.setDate(currentDate.getDate() + 1);
     }
+  };
+
+  // Single Round Robin
+  for (let round = 0; round < numRounds; round++) {
+    for (let match = 0; match < matchesPerRound; match++) {
+      const home = teams[match];
+      const away = teams[numTeams - 1 - match];
+      addFixture(home, away, currentRound);
+    }
+    teams.splice(1, 0, teams.pop()!);
+    currentRound++;
   }
 
+  // Double Round Robin
   if (format === 'double') {
-    const singleRoundFixtures = [...fixtures];
-    const reverseFixtures = singleRoundFixtures.map(f => ({
-      ...f,
-      round: f.round + numRounds,
-      homeTeamId: f.awayTeamId,
-      awayTeamId: f.homeTeamId,
-      // dates/times would need adjusting in a real scenario
-    }));
-    return [...fixtures, ...reverseFixtures];
+    for (let round = 0; round < numRounds; round++) {
+      for (let match = 0; match < matchesPerRound; match++) {
+        const home = teams[numTeams - 1 - match];
+        const away = teams[match];
+        addFixture(home, away, currentRound);
+      }
+      teams.splice(1, 0, teams.pop()!);
+      currentRound++;
+    }
   }
 
   return fixtures;

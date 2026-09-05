@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getPlayers, deletePlayer } from '@/lib/firestore/players';
-import { getTeams } from '@/lib/firestore/teams';
+import { getPlayers, deletePlayer } from '@/lib/supabase/players';
+import { getTeams } from '@/lib/supabase/teams';
 import { Player, Team } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -83,8 +83,8 @@ export default function AdminPlayersList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8 rounded-full bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden">
-                          {player.photoUrl ? (
-                            <img src={player.photoUrl} alt="" className="h-full w-full object-cover" />
+                          {player.photo_url ? (
+                            <img src={player.photo_url} alt="" className="h-full w-full object-cover" />
                           ) : (
                             <span className="text-gray-500 text-xs">👤</span>
                           )}
@@ -93,7 +93,7 @@ export default function AdminPlayersList() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {teams[player.teamId]?.name || 'Unknown Team'}
+                      {teams[player.team_id]?.name || 'Unknown Team'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-[#1C2333] text-gray-300 border border-[#2D384E]">
@@ -101,7 +101,7 @@ export default function AdminPlayersList() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-300 font-mono">
-                      {player.jerseyNumber}
+                      {player.jersey_number}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link href={`/admin/players/${player.id}`} className="text-[#E5A93C] hover:text-[#FFC857] mr-4">

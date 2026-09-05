@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getTeams } from '@/lib/firestore/teams';
-import { getPlayers } from '@/lib/firestore/players';
-import { getMatches } from '@/lib/firestore/matches';
+import { getTeams } from '@/lib/supabase/teams';
+import { getPlayers } from '@/lib/supabase/players';
+import { getMatches } from '@/lib/supabase/matches';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
 

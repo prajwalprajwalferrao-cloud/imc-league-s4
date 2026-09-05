@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getTeams } from '@/lib/firestore/teams';
+import { getTeams } from '@/lib/supabase/teams';
 import { Team } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
@@ -40,17 +40,17 @@ export default function TeamsPage() {
               <div className="px-6 pb-6 pt-0 relative">
                 <div className="flex justify-center -mt-12 mb-4 relative z-10">
                   <div className="w-24 h-24 rounded-full border-4 border-[#141923] bg-[#0B0E14] flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
-                    {team.logoUrl ? (
-                      <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
+                    {team.logo_url ? (
+                      <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-2xl font-black text-white">{team.shortName}</span>
+                      <span className="text-2xl font-black text-white">{team.short_name}</span>
                     )}
                   </div>
                 </div>
                 
                 <div className="text-center space-y-1">
                   <h3 className="text-lg font-black text-white uppercase tracking-wide group-hover:text-[#E5A93C] transition-colors">{team.name}</h3>
-                  <p className="text-xs font-bold text-gray-500">{team.shortName}</p>
+                  <p className="text-xs font-bold text-gray-500">{team.short_name}</p>
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-[#232B3E] grid grid-cols-2 gap-2 text-center text-xs">

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getTeams } from '@/lib/firestore/teams';
-import { getMatches } from '@/lib/firestore/matches';
+import { getTeams } from '@/lib/supabase/teams';
+import { getMatches } from '@/lib/supabase/matches';
 import { calculateStandings } from '@/lib/standings';
 import { Team, Match, StandingRow } from '@/lib/types';
 import StandingsTable from '@/components/StandingsTable';

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getMatch, updateMatch, subscribeToMatch } from '@/lib/firestore/matches';
-import { getTeams } from '@/lib/firestore/teams';
-import { getPlayers } from '@/lib/firestore/players';
-import { completeMatch } from '@/lib/firestore/completeMatch';
+import { getMatch, updateMatch, subscribeToMatch } from '@/lib/supabase/matches';
+import { getTeams } from '@/lib/supabase/teams';
+import { getPlayers } from '@/lib/supabase/players';
+import { completeMatch } from '@/lib/supabase/completeMatch';
 import { Match, Team, Player } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -32,9 +32,9 @@ export default function AdminMatchControl({ params }: { params: { matchId: strin
 
         const [t, p] = await Promise.all([getTeams(), getPlayers()]);
         
-        setHomeTeam(t.find(team => team.id === initialMatch.homeTeamId) || null);
-        setAwayTeam(t.find(team => team.id === initialMatch.awayTeamId) || null);
-        setPlayers(p.filter(player => player.teamId === initialMatch.homeTeamId || player.teamId === initialMatch.awayTeamId));
+        setHomeTeam(t.find(team => team.id === initialMatch.home_team_id) || null);
+        setAwayTeam(t.find(team => team.id === initialMatch.away_team_id) || null);
+        setPlayers(p.filter(player => player.team_id === initialMatch.home_team_id || player.team_id === initialMatch.away_team_id));
         
         unsubscribe = subscribeToMatch(params.matchId, (m) => {
           setMatch(m);
@@ -51,7 +51,7 @@ export default function AdminMatchControl({ params }: { params: { matchId: strin
 
   const handleUpdateScore = async (team: 'home' | 'away', type: 'runs' | 'wickets' | 'overs', value: number) => {
     if (!match) return;
-    const field = `${team}${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    const field = `${team}_${type === "runs" ? "score" : type}`;
     try {
       await updateMatch(match.id, { [field]: value });
     } catch (err) {
@@ -96,16 +96,16 @@ export default function AdminMatchControl({ params }: { params: { matchId: strin
             <div className="mt-4 flex flex-col gap-4 items-center">
               <div>
                 <label className="block text-xs text-gray-400 uppercase">Runs</label>
-                <input type="number" value={match.homeScore} onChange={e => handleUpdateScore('home', 'runs', parseInt(e.target.value) || 0)} className="w-20 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-2 text-xl font-bold text-white" />
+                <input type="number" value={match.home_score} onChange={e => handleUpdateScore('home', 'runs', parseInt(e.target.value) || 0)} className="w-20 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-2 text-xl font-bold text-white" />
               </div>
               <div className="flex gap-4">
                 <div>
                   <label className="block text-xs text-gray-400 uppercase">Wickets</label>
-                  <input type="number" value={match.homeWickets} max="10" onChange={e => handleUpdateScore('home', 'wickets', parseInt(e.target.value) || 0)} className="w-16 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-1 text-white" />
+                  <input type="number" value={match.home_wickets} max="10" onChange={e => handleUpdateScore('home', 'wickets', parseInt(e.target.value) || 0)} className="w-16 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-1 text-white" />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-400 uppercase">Overs</label>
-                  <input type="number" step="0.1" value={match.homeOvers} onChange={e => handleUpdateScore('home', 'overs', parseFloat(e.target.value) || 0)} className="w-16 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-1 text-white" />
+                  <input type="number" step="0.1" value={match.home_overs} onChange={e => handleUpdateScore('home', 'overs', parseFloat(e.target.value) || 0)} className="w-16 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-1 text-white" />
                 </div>
               </div>
             </div>
@@ -123,16 +123,16 @@ export default function AdminMatchControl({ params }: { params: { matchId: strin
             <div className="mt-4 flex flex-col gap-4 items-center">
               <div>
                 <label className="block text-xs text-gray-400 uppercase">Runs</label>
-                <input type="number" value={match.awayScore} onChange={e => handleUpdateScore('away', 'runs', parseInt(e.target.value) || 0)} className="w-20 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-2 text-xl font-bold text-white" />
+                <input type="number" value={match.away_score} onChange={e => handleUpdateScore('away', 'runs', parseInt(e.target.value) || 0)} className="w-20 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-2 text-xl font-bold text-white" />
               </div>
               <div className="flex gap-4">
                 <div>
                   <label className="block text-xs text-gray-400 uppercase">Wickets</label>
-                  <input type="number" value={match.awayWickets} max="10" onChange={e => handleUpdateScore('away', 'wickets', parseInt(e.target.value) || 0)} className="w-16 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-1 text-white" />
+                  <input type="number" value={match.away_wickets} max="10" onChange={e => handleUpdateScore('away', 'wickets', parseInt(e.target.value) || 0)} className="w-16 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-1 text-white" />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-400 uppercase">Overs</label>
-                  <input type="number" step="0.1" value={match.awayOvers} onChange={e => handleUpdateScore('away', 'overs', parseFloat(e.target.value) || 0)} className="w-16 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-1 text-white" />
+                  <input type="number" step="0.1" value={match.away_overs} onChange={e => handleUpdateScore('away', 'overs', parseFloat(e.target.value) || 0)} className="w-16 text-center bg-[#0B0E14] border border-[#2D384E] rounded p-1 text-white" />
                 </div>
               </div>
             </div>

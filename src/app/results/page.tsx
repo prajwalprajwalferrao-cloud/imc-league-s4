@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getMatches } from '@/lib/firestore/matches';
+import { getMatches } from '@/lib/supabase/matches';
 import { Match } from '@/lib/types';
 import MatchCard from '@/components/MatchCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';

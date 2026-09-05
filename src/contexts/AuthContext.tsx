@@ -1,79 +1,76 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  User,
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-} from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { UserProfile } from '@/lib/types';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
-interface AuthContextValue {
-  user: User | null;
-  profile: UserProfile | null;
+interface AuthContextType {
+  user: any | null;
   isAdmin: boolean;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue>({
+const AuthContext = createContext<AuthContextType>({
   user: null,
-  profile: null,
   isAdmin: false,
   loading: true,
-  signIn: async () => {},
   signOut: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<any | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        try {
-          const profileDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (profileDoc.exists()) {
-            setProfile({ uid: firebaseUser.uid, ...profileDoc.data() } as UserProfile);
-          } else {
-            setProfile(null);
-          }
-        } catch {
-          setProfile(null);
-        }
-      } else {
-        setProfile(null);
+    async function checkUser(sessionUser: any) {
+      if (!sessionUser) {
+        setUser(null);
+        setIsAdmin(false);
+        setLoading(false);
+        return;
       }
+
+      setUser(sessionUser);
+      // Check role in user_roles table
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('id', sessionUser.id)
+        .single();
+        
+      setIsAdmin(data?.role === 'admin');
+      
+      // Set cookie for middleware
+      document.cookie = `imc-auth=true; path=/; max-age=86400`;
       setLoading(false);
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      checkUser(session?.user);
     });
-    return unsubscribe;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      checkUser(session?.user);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
-  };
-
   const signOut = async () => {
-    await firebaseSignOut(auth);
-    setProfile(null);
+    await supabase.auth.signOut();
+    document.cookie = 'imc-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+    router.push('/admin/login');
   };
-
-  const isAdmin = profile?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, profile, isAdmin, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, isAdmin, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => useContext(AuthContext);

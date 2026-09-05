@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getMatches, updateMatch } from '@/lib/firestore/matches';
-import { getTeams } from '@/lib/firestore/teams';
+import { getMatches, updateMatch } from '@/lib/supabase/matches';
+import { getTeams } from '@/lib/supabase/teams';
 import { Match, Team } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -83,11 +83,11 @@ export default function AdminFixturesList() {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center space-x-3">
                         <span className="text-sm font-bold text-white w-24 text-right">
-                          {teams[match.homeTeamId]?.shortName || 'TBA'}
+                          {teams[match.home_team_id]?.short_name || 'TBA'}
                         </span>
                         <span className="text-xs text-gray-500 bg-[#0B0E14] px-2 py-1 rounded border border-[#2D384E]">vs</span>
                         <span className="text-sm font-bold text-white w-24 text-left">
-                          {teams[match.awayTeamId]?.shortName || 'TBA'}
+                          {teams[match.away_team_id]?.short_name || 'TBA'}
                         </span>
                       </div>
                     </td>

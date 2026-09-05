@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getMatches, subscribeToLiveMatches } from '@/lib/firestore/matches';
-import { getTeams } from '@/lib/firestore/teams';
-import { getAnnouncements } from '@/lib/firestore/announcements';
+import { getMatches, subscribeToLiveMatches } from '@/lib/supabase/matches';
+import { getTeams } from '@/lib/supabase/teams';
+import { getAnnouncements } from '@/lib/supabase/announcements';
 import { calculateStandings } from '@/lib/standings';
 import { Match, Team, Announcement, StandingRow } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
