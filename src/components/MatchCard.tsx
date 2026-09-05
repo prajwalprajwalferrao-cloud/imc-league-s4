@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Match, Team } from '@/lib/types';
 import { getTeams } from '@/lib/supabase/teams';
@@ -14,87 +16,93 @@ export default function MatchCard({ match, showDetails = true }: Props) {
   const [awayTeam, setAwayTeam] = useState<Team | null>(null);
 
   useEffect(() => {
-    // In a real app we'd fetch teams globally or pass them in to avoid N+1 queries.
-    // Doing it here for component independence.
     getTeams().then(teams => {
       setHomeTeam(teams.find(t => t.id === match.home_team_id) || null);
       setAwayTeam(teams.find(t => t.id === match.away_team_id) || null);
     });
   }, [match.home_team_id, match.away_team_id]);
 
-  const homeScoreStr = formatScore(match.home_score, match.home_wickets, match.status === 'Completed' ? undefined : match.home_overs);
-  const awayScoreStr = formatScore(match.away_score, match.away_wickets, match.status === 'Completed' ? undefined : match.away_overs);
-  
-  const resultText = match.status === 'Completed' && homeTeam && awayTeam
+  const isLive = match.status === 'Live';
+  const isCompleted = match.status === 'Completed';
+  const homeWon = isCompleted && match.home_score > match.away_score;
+  const awayWon = isCompleted && match.away_score > match.home_score;
+
+  const resultText = isCompleted && homeTeam && awayTeam
     ? getMatchResult(match, homeTeam.short_name, awayTeam.short_name)
     : '';
 
   return (
-    <Link href={`/matches/${match.id}`} className="block">
-      <div className={`bg-[#141923] rounded-xl border transition-all hover:bg-[#1A2130] group
-        ${match.status === 'Live' ? 'border-[#FF3B30] shadow-[0_0_15px_-3px_rgba(255,59,48,0.2)]' : 'border-[#232B3E] hover:border-[#E5A93C]/50'}`}>
-        
-        {/* Header */}
-        <div className="flex justify-between items-center px-4 py-2 border-b border-[#232B3E] bg-[#0B0E14] rounded-t-xl">
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
-            {new Date(match.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} • {match.time}
-          </span>
-          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border
-            ${match.status === 'Live' ? 'bg-red-500/10 text-red-500 border-red-500/20 animate-pulse' : 
-              match.status === 'Completed' ? 'bg-[#1C2333] text-gray-400 border-transparent' : 
-              'bg-[#1C2333] text-[#E5A93C] border-[#E5A93C]/20'}`}>
-            {match.status}
-          </span>
-        </div>
-
-        {/* Body */}
-        <div className="p-4 space-y-3">
-          {/* Home Team */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 rounded-full bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden">
-                {homeTeam?.logo_url ? <img src={homeTeam.logo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] font-bold text-white">{homeTeam?.short_name}</span>}
-              </div>
-              <span className={`font-bold text-sm ${match.status === 'Completed' && match.home_score > match.away_score ? 'text-white' : 'text-gray-300'}`}>
-                {homeTeam?.name || 'TBA'}
-              </span>
-            </div>
-            {(match.status === 'Live' || match.status === 'Completed') && (
-              <span className={`font-mono text-sm font-bold ${match.status === 'Completed' && match.home_score > match.away_score ? 'text-white' : 'text-gray-400'}`}>
-                {homeScoreStr}
-              </span>
-            )}
-          </div>
-
-          {/* Away Team */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 rounded-full bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden">
-                {awayTeam?.logo_url ? <img src={awayTeam.logo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] font-bold text-white">{awayTeam?.short_name}</span>}
-              </div>
-              <span className={`font-bold text-sm ${match.status === 'Completed' && match.away_score > match.home_score ? 'text-white' : 'text-gray-300'}`}>
-                {awayTeam?.name || 'TBA'}
-              </span>
-            </div>
-            {(match.status === 'Live' || match.status === 'Completed') && (
-              <span className={`font-mono text-sm font-bold ${match.status === 'Completed' && match.away_score > match.home_score ? 'text-white' : 'text-gray-400'}`}>
-                {awayScoreStr}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        {showDetails && (
-          <div className="px-4 py-2 border-t border-[#232B3E] bg-[#0B0E14]/50 rounded-b-xl text-[11px] font-bold text-gray-500 text-center">
-            {match.status === 'Completed' ? (
-              <span className="text-[#E5A93C]">{resultText}</span>
-            ) : (
-              <span>Match Center →</span>
-            )}
-          </div>
-        )}
+    <div className={`glass-card rounded-xl overflow-hidden transition-all hover:border-[#E5A93C]/40 group ${isLive ? 'border-red-500/40 glow-red' : ''}`}>
+      {/* Header bar */}
+      <div className="flex justify-between items-center px-4 py-2 bg-[#0B0E14]/60 border-b border-[#232B3E]/50">
+        <span className="text-[10px] font-bold text-gray-500 tracking-wider">
+          {match.date} • {match.time} {match.venue ? `• ${match.venue}` : ''}
+        </span>
+        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+          isLive ? 'bg-red-500/15 text-red-400 border border-red-500/20' :
+          isCompleted ? 'text-gray-500' :
+          'text-[#E5A93C]/70'
+        }`}>
+          {isLive && <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1 animate-pulse" />}
+          {match.status}
+        </span>
       </div>
-    </Link>
+
+      {/* Teams */}
+      <div className="p-4 space-y-3">
+        {/* Home Team Row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden flex-shrink-0"
+              style={homeTeam?.colour ? {borderColor: homeTeam.colour + '40'} : {}}>
+              {homeTeam?.logo_url
+                ? <img src={homeTeam.logo_url} alt="" className="w-full h-full object-cover" />
+                : <span className="text-[10px] font-black" style={{color: homeTeam?.colour || '#fff'}}>{homeTeam?.short_name}</span>
+              }
+            </div>
+            <span className={`text-sm font-bold truncate ${homeWon ? 'text-white' : 'text-gray-300'}`}>
+              {homeTeam?.name || 'TBA'}
+            </span>
+          </div>
+          {(isLive || isCompleted) && (
+            <span className={`font-mono text-sm font-black tabular-nums ${homeWon ? 'text-[#E5A93C]' : 'text-gray-400'}`}>
+              {formatScore(match.home_score, match.home_wickets, isLive ? match.home_overs : undefined)}
+            </span>
+          )}
+        </div>
+
+        {/* Away Team Row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden flex-shrink-0"
+              style={awayTeam?.colour ? {borderColor: awayTeam.colour + '40'} : {}}>
+              {awayTeam?.logo_url
+                ? <img src={awayTeam.logo_url} alt="" className="w-full h-full object-cover" />
+                : <span className="text-[10px] font-black" style={{color: awayTeam?.colour || '#fff'}}>{awayTeam?.short_name}</span>
+              }
+            </div>
+            <span className={`text-sm font-bold truncate ${awayWon ? 'text-white' : 'text-gray-300'}`}>
+              {awayTeam?.name || 'TBA'}
+            </span>
+          </div>
+          {(isLive || isCompleted) && (
+            <span className={`font-mono text-sm font-black tabular-nums ${awayWon ? 'text-[#E5A93C]' : 'text-gray-400'}`}>
+              {formatScore(match.away_score, match.away_wickets, isLive ? match.away_overs : undefined)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      {showDetails && (
+        <div className="px-4 py-2.5 border-t border-[#232B3E]/50 bg-[#0B0E14]/30 text-center">
+          {isCompleted ? (
+            <span className="text-[11px] font-bold text-[#E5A93C]">{resultText}</span>
+          ) : (
+            <span className="text-[11px] font-bold text-gray-500 group-hover:text-gray-300 transition-colors">View Details →</span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

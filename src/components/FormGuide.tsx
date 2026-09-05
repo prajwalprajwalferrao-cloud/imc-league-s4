@@ -3,30 +3,30 @@ interface Props {
 }
 
 export default function FormGuide({ form }: Props) {
-  if (form.length === 0) {
-    return <span className="text-xs text-gray-500">-</span>;
+  if (!form || form.length === 0) {
+    return <span className="text-xs text-gray-600 font-mono">-</span>;
   }
 
-  const getColor = (result: string) => {
-    switch (result) {
-      case 'W': return 'bg-green-500 text-white border-green-600';
-      case 'L': return 'bg-red-500 text-white border-red-600';
-      case 'NR': return 'bg-gray-500 text-white border-gray-600';
-      default: return 'bg-gray-800 text-gray-400';
-    }
-  };
-
   return (
-    <div className="flex items-center justify-center space-x-1">
-      {form.map((result, i) => (
-        <div
-          key={i}
-          className={`w-5 h-5 rounded-sm flex items-center justify-center text-[10px] font-black border ${getColor(result)}`}
-          title={result}
-        >
-          {result}
-        </div>
-      ))}
+    <div className="flex items-center justify-center gap-1">
+      {form.map((result, i) => {
+        const isWin = result === 'W';
+        const isLoss = result === 'L';
+        return (
+          <span
+            key={i}
+            className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black uppercase shadow-sm ${
+              isWin
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : isLoss
+                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+            }`}
+          >
+            {result}
+          </span>
+        );
+      })}
     </div>
   );
 }
