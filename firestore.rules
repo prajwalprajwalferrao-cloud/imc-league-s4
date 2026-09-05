@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /seasons/{id}        { allow read: if true; allow write: if isAdmin(); }
+    match /teams/{id}          { allow read: if true; allow write: if isAdmin(); }
+    match /players/{id}        { allow read: if true; allow write: if isAdmin(); }
+    match /matches/{id}        { allow read: if true; allow write: if isAdmin(); }
+    match /matchEvents/{id}    { allow read: if true; allow write: if isAdmin(); }
+    match /announcements/{id}  { allow read: if true; allow write: if isAdmin(); }
+    match /leagueSettings/{id} { allow read: if true; allow write: if isAdmin(); }
+
+    match /users/{uid} {
+      allow read:  if isSignedIn() && request.auth.uid == uid;
+      allow write: if isAdmin();
+    }
+  }
+}

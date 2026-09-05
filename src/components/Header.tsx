@@ -1,71 +1,106 @@
-import React from 'react';
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
-export function Header() {
+export default function Header() {
+  const pathname = usePathname();
+  const { isAdmin } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
+
+  const navLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'Standings', href: '/standings' },
+    { name: 'Fixtures', href: '/fixtures' },
+    { name: 'Results', href: '/results' },
+    { name: 'Teams', href: '/teams' },
+    { name: 'Players', href: '/players' },
+    { name: 'Stats', href: '/statistics' },
+  ];
+
   return (
-    <header className="sticky top-0 z-50 bg-[#0B0E14]/90 backdrop-blur-md border-b border-[#232B3E]">
+    <header className="bg-[#0D111A] border-b border-[#232B3E] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo Brand */}
-          <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#E5A93C] to-[#B37B1D] flex items-center justify-center font-black text-black text-lg tracking-wider shadow-lg group-hover:scale-105 transition-transform">
-              IMC
-            </div>
-            <div>
-              <span className="font-extrabold text-lg text-white tracking-wide block leading-none">
-                IMC LEAGUE
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <Link href="/" className="flex-shrink-0 flex items-center">
+              <span className="text-xl font-black text-white tracking-tight uppercase">
+                IMC <span className="text-[#E5A93C]">League</span>
               </span>
-              <span className="text-[10px] font-bold text-[#E5A93C] tracking-widest uppercase block mt-0.5">
-                SEASON 04
-              </span>
-            </div>
-          </Link>
-
-          {/* Public Navigation */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-            <NavLink href="/" label="Home" />
-            <NavLink href="/fixtures" label="Fixtures" />
-            <NavLink href="/results" label="Results" />
-            <NavLink href="/standings" label="Standings" />
-            <NavLink href="/teams" label="Teams" />
-            <NavLink href="/statistics" label="Stats" />
-          </nav>
-
-          {/* Admin Login Link */}
-          <div>
-            <Link
-              href="/admin/login"
-              className="text-xs font-semibold px-3.5 py-2 rounded-md bg-[#1C2333] hover:bg-[#E5A93C] text-gray-300 hover:text-black border border-[#2D384E] hover:border-[#E5A93C] transition-all shadow-sm flex items-center space-x-1.5"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <span>Admin Area</span>
             </Link>
+            <nav className="hidden md:ml-8 md:flex md:space-x-8">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold uppercase tracking-wider ${
+                    isActive(link.href) && link.href !== '/' || (link.href === '/' && pathname === '/')
+                      ? 'border-[#E5A93C] text-white'
+                      : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="px-4 py-2 border border-[#E5A93C] text-[#E5A93C] hover:bg-[#E5A93C] hover:text-black text-sm font-bold rounded-md transition-colors uppercase tracking-wider"
+              >
+                Admin Panel
+              </Link>
+            )}
+          </div>
+
+          <div className="flex items-center md:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-400 hover:text-white p-2"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
-
-        {/* Mobile Navigation bar */}
-        <div className="md:hidden flex items-center justify-between py-2 border-t border-[#1C2333] text-xs font-semibold overflow-x-auto no-scrollbar space-x-4 px-1">
-          <Link href="/" className="text-gray-300 hover:text-[#E5A93C] whitespace-nowrap py-1">Home</Link>
-          <Link href="/fixtures" className="text-gray-300 hover:text-[#E5A93C] whitespace-nowrap py-1">Fixtures</Link>
-          <Link href="/results" className="text-gray-300 hover:text-[#E5A93C] whitespace-nowrap py-1">Results</Link>
-          <Link href="/standings" className="text-gray-300 hover:text-[#E5A93C] whitespace-nowrap py-1">Standings</Link>
-          <Link href="/teams" className="text-gray-300 hover:text-[#E5A93C] whitespace-nowrap py-1">Teams</Link>
-          <Link href="/statistics" className="text-gray-300 hover:text-[#E5A93C] whitespace-nowrap py-1">Stats</Link>
-        </div>
       </div>
-    </header>
-  );
-}
 
-function NavLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="px-3 py-2 rounded-md text-sm font-semibold text-gray-300 hover:text-white hover:bg-[#1C2333] transition-colors"
-    >
-      {label}
-    </Link>
+      {isMenuOpen && (
+        <div className="md:hidden bg-[#141923] border-b border-[#232B3E]">
+          <div className="pt-2 pb-3 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={() => setIsMenuOpen(false)}
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-bold uppercase ${
+                  isActive(link.href) && link.href !== '/' || (link.href === '/' && pathname === '/')
+                    ? 'bg-[#1C2333] border-[#E5A93C] text-white'
+                    : 'border-transparent text-gray-400 hover:bg-[#1C2333] hover:text-white'
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setIsMenuOpen(false)}
+                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-bold uppercase text-[#E5A93C] hover:bg-[#1C2333]"
+              >
+                Admin Panel
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+    </header>
   );
 }

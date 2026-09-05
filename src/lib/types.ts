@@ -1,87 +1,135 @@
-export type SeasonStatus = 'Upcoming' | 'Active' | 'Completed';
-export type TournamentFormat = 'Round Robin' | 'Double Round Robin' | 'Knockout';
+export type MatchStatus = 'Upcoming' | 'Live' | 'Completed' | 'Postponed' | 'Cancelled';
+export type PlayerPosition = 'Batsman' | 'Bowler' | 'All-rounder' | 'Wicket-keeper';
+export type EventType = 'wicket' | 'boundary_4' | 'boundary_6' | 'catch' | 'run_out' | 'no_ball' | 'wide' | 'penalty_run' | 'runs';
+export type DismissalType = 'bowled' | 'caught' | 'lbw' | 'run_out' | 'stumped' | 'hit_wicket' | 'retired';
+export type Priority = 'normal' | 'high' | 'urgent';
+export type UserRole = 'admin' | 'viewer';
+export type SeasonStatus = 'upcoming' | 'active' | 'completed';
+export type TournamentFormat = 'T20' | 'ODI' | 'Custom';
 
 export interface Season {
   id: string;
   name: string;
-  season_number: number;
-  start_date: string | null;
-  end_date: string | null;
-  format: TournamentFormat;
+  seasonNumber: number;
   status: SeasonStatus;
-  is_active: boolean;
-  points_per_win: number;
-  points_per_draw: number;
-  points_per_loss: number;
-  created_at: string;
+  isActive: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  format: TournamentFormat;
+  totalOvers: number;
+  pointsWin: number;
+  pointsNoResult: number;
+  pointsLoss: number;
+  enableMotm: boolean;
+  venue: string;
+  createdAt: string;
 }
 
 export interface Team {
   id: string;
-  season_id: string;
+  seasonId: string;
   name: string;
-  short_name: string;
-  logo_url: string | null;
-  color_hex: string;
-  captain_name: string | null;
-  vice_captain_name: string | null;
-  coach_name: string | null;
-  description: string | null;
-  created_at: string;
+  shortName: string;
+  logoUrl: string;
+  colour: string;
+  captain: string;
+  manager: string;
+  isDeleted: boolean;
+  createdAt: string;
 }
 
 export interface Player {
   id: string;
-  team_id: string;
-  full_name: string;
-  photo_url: string | null;
-  jersey_number: number | null;
-  position: string;
-  is_captain: boolean;
-  is_active: boolean;
-  created_at: string;
+  seasonId: string;
+  teamId: string;
+  name: string;
+  photoUrl: string;
+  jerseyNumber: number;
+  position: PlayerPosition;
+  runsScored: number;
+  ballsFaced: number;
+  wicketsTaken: number;
+  oversBowled: number;
+  runsConceded: number;
+  catches: number;
+  runOuts: number;
+  appearances: number;
+  motm: number;
+  isActive: boolean;
+  createdAt: string;
 }
-
-export type MatchStatus = 'Scheduled' | 'Live' | 'Half Time' | 'Completed' | 'Postponed' | 'Cancelled';
 
 export interface Match {
   id: string;
-  season_id: string;
-  home_team_id: string;
-  away_team_id: string;
-  home_score: number;
-  away_score: number;
-  match_date: string;
-  venue: string;
+  seasonId: string;
+  round: number;
+  homeTeamId: string;
+  awayTeamId: string;
+  homeScore: number;
+  homeWickets: number;
+  homeOvers: number;
+  awayScore: number;
+  awayWickets: number;
+  awayOvers: number;
+  battingFirstTeamId: string | null;
+  tossWinnerId: string | null;
   status: MatchStatus;
-  current_minute: string;
-  round_number: number;
-  created_at: string;
-  updated_at: string;
-  home_team?: Team;
-  away_team?: Team;
+  venue: string;
+  date: string;
+  time: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MatchEvent {
   id: string;
-  match_id: string;
-  team_id: string | null;
-  player_id: string | null;
-  event_type: 'Goal' | 'Yellow Card' | 'Red Card' | 'Substitution' | 'Penalty';
-  minute: number | null;
-  notes: string | null;
-  created_at: string;
-  player?: Player;
-  team?: Team;
+  matchId: string;
+  seasonId: string;
+  battingTeamId: string;
+  bowlingTeamId: string;
+  type: EventType;
+  batsmanId: string | null;
+  bowlerId: string | null;
+  fielderId: string | null;
+  runs: number;
+  over: number;
+  ball: number;
+  dismissalType: DismissalType | null;
+  notes: string;
+  createdAt: string;
 }
 
 export interface Announcement {
   id: string;
   title: string;
-  description: string;
-  priority: 'Normal' | 'High' | 'Urgent';
-  is_active: boolean;
-  created_at: string;
+  body: string;
+  priority: Priority;
+  isActive: boolean;
+  imageUrl: string;
+  createdAt: string;
+}
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+export interface LeagueSettings {
+  id: string;
+  leagueName: string;
+  seasonName: string;
+  logoUrl: string;
+  currentSeasonId: string;
+  pointsWin: number;
+  pointsNoResult: number;
+  pointsLoss: number;
+  enableMotm: boolean;
+  defaultVenue: string;
+  totalOvers: number;
 }
 
 export interface StandingRow {
@@ -89,11 +137,13 @@ export interface StandingRow {
   team: Team;
   played: number;
   won: number;
-  drawn: number;
   lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDifference: number;
+  noResult: number;
+  runsScored: number;
+  runsConceded: number;
+  oversFaced: number;
+  oversBowled: number;
+  nrr: number;
   points: number;
-  recentForm: ('W' | 'D' | 'L')[];
+  recentForm: ('W' | 'L' | 'NR')[];
 }

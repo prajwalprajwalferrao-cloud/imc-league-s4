@@ -1,9 +1,10 @@
-import { Match, StandingRow, Team, Season } from './types';
+import { Match, StandingRow, Team } from './types';
+import { calculateNRR } from './matchUtils';
 
-export function calculateStandings(teams: Team[], matches: Match[], season?: Season): StandingRow[] {
-  const pointsWin = season?.points_per_win ?? 3;
-  const pointsDraw = season?.points_per_draw ?? 1;
-  const pointsLoss = season?.points_per_loss ?? 0;
+export function calculateStandings(teams: Team[], matches: Match[], settings?: { pointsWin: number, pointsNoResult: number, pointsLoss: number }): StandingRow[] {
+  const pointsWin = settings?.pointsWin ?? 2;
+  const pointsNoResult = settings?.pointsNoResult ?? 1;
+  const pointsLoss = settings?.pointsLoss ?? 0;
 
   const standingsMap: Record<string, StandingRow> = {};
 
@@ -13,36 +14,43 @@ export function calculateStandings(teams: Team[], matches: Match[], season?: Sea
       team,
       played: 0,
       won: 0,
-      drawn: 0,
       lost: 0,
-      goalsFor: 0,
-      goalsAgainst: 0,
-      goalDifference: 0,
+      noResult: 0,
+      runsScored: 0,
+      runsConceded: 0,
+      oversFaced: 0,
+      oversBowled: 0,
+      nrr: 0,
       points: 0,
       recentForm: [],
     };
   });
 
-  // Filter completed matches sorted by date ascending for form tracking
   const completedMatches = matches
     .filter((m) => m.status === 'Completed')
-    .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   completedMatches.forEach((match) => {
-    const home = standingsMap[match.home_team_id];
-    const away = standingsMap[match.away_team_id];
+    const home = standingsMap[match.homeTeamId];
+    const away = standingsMap[match.awayTeamId];
 
     if (!home || !away) return;
 
     home.played += 1;
     away.played += 1;
 
-    home.goalsFor += match.home_score;
-    home.goalsAgainst += match.away_score;
-    away.goalsFor += match.away_score;
-    away.goalsAgainst += match.home_score;
+    home.runsScored += match.homeScore;
+    home.runsConceded += match.awayScore;
+    away.runsScored += match.awayScore;
+    away.runsConceded += match.homeScore;
+    
+    // Simplification for over tracking - ideally we'd track legal balls
+    home.oversFaced += match.homeOvers;
+    home.oversBowled += match.awayOvers;
+    away.oversFaced += match.awayOvers;
+    away.oversBowled += match.homeOvers;
 
-    if (match.home_score > match.away_score) {
+    if (match.homeScore > match.awayScore) {
       home.won += 1;
       home.points += pointsWin;
       home.recentForm.push('W');
@@ -50,7 +58,7 @@ export function calculateStandings(teams: Team[], matches: Match[], season?: Sea
       away.lost += 1;
       away.points += pointsLoss;
       away.recentForm.push('L');
-    } else if (match.home_score < match.away_score) {
+    } else if (match.homeScore < match.awayScore) {
       away.won += 1;
       away.points += pointsWin;
       away.recentForm.push('W');
@@ -59,27 +67,27 @@ export function calculateStandings(teams: Team[], matches: Match[], season?: Sea
       home.points += pointsLoss;
       home.recentForm.push('L');
     } else {
-      home.drawn += 1;
-      home.points += pointsDraw;
-      home.recentForm.push('D');
+      home.noResult += 1;
+      home.points += pointsNoResult;
+      home.recentForm.push('NR');
 
-      away.drawn += 1;
-      away.points += pointsDraw;
-      away.recentForm.push('D');
+      away.noResult += 1;
+      away.points += pointsNoResult;
+      away.recentForm.push('NR');
     }
   });
 
   const standings = Object.values(standingsMap).map((item) => ({
     ...item,
-    goalDifference: item.goalsFor - item.goalsAgainst,
-    recentForm: item.recentForm.slice(-5), // Keep last 5 matches
+    nrr: calculateNRR(item.runsScored, item.oversFaced, item.runsConceded, item.oversBowled),
+    recentForm: item.recentForm.slice(-5), 
   }));
 
-  // Sort standings: 1. Points, 2. GD, 3. GF, 4. Team Name
+  // Sort standings: 1. Points, 2. NRR, 3. Runs Scored, 4. Team Name
   standings.sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
-    if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-    if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+    if (b.nrr !== a.nrr) return b.nrr - a.nrr;
+    if (b.runsScored !== a.runsScored) return b.runsScored - a.runsScored;
     return a.team.name.localeCompare(b.team.name);
   });
 

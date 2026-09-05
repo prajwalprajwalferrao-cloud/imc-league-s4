@@ -1,5 +1,48 @@
-node_modules
-.next
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# env files - NEVER commit these
+.env
 .env.local
-.env.production
-.DS_Store
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Firebase service account / admin keys - NEVER commit
+serviceAccountKey.json
+firebase-admin-*.json
+*.pem
+*.key
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

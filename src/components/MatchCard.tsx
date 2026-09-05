@@ -1,95 +1,100 @@
-import React from 'react';
-import { Match } from '@/lib/types';
-import { format } from 'date-fns';
+import Link from 'next/link';
+import { Match, Team } from '@/lib/types';
+import { getTeams } from '@/lib/firestore/teams';
+import { useEffect, useState } from 'react';
+import { formatScore, getMatchResult } from '@/lib/matchUtils';
 
-interface MatchCardProps {
+interface Props {
   match: Match;
   showDetails?: boolean;
 }
 
-export function MatchCard({ match, showDetails = true }: MatchCardProps) {
-  const isLive = match.status === 'Live' || match.status === 'Half Time';
-  const isCompleted = match.status === 'Completed';
+export default function MatchCard({ match, showDetails = true }: Props) {
+  const [homeTeam, setHomeTeam] = useState<Team | null>(null);
+  const [awayTeam, setAwayTeam] = useState<Team | null>(null);
+
+  useEffect(() => {
+    // In a real app we'd fetch teams globally or pass them in to avoid N+1 queries.
+    // Doing it here for component independence.
+    getTeams().then(teams => {
+      setHomeTeam(teams.find(t => t.id === match.homeTeamId) || null);
+      setAwayTeam(teams.find(t => t.id === match.awayTeamId) || null);
+    });
+  }, [match.homeTeamId, match.awayTeamId]);
+
+  const homeScoreStr = formatScore(match.homeScore, match.homeWickets, match.status === 'Completed' ? undefined : match.homeOvers);
+  const awayScoreStr = formatScore(match.awayScore, match.awayWickets, match.status === 'Completed' ? undefined : match.awayOvers);
+  
+  const resultText = match.status === 'Completed' && homeTeam && awayTeam
+    ? getMatchResult(match, homeTeam.shortName, awayTeam.shortName)
+    : '';
 
   return (
-    <div className={`relative bg-[#141923] border ${isLive ? 'border-[#FF3B30] glow-live' : 'border-[#232B3E] hover:border-[#E5A93C]/50'} rounded-xl p-4 sm:p-5 transition-all`}>
-      {/* Header Info */}
-      <div className="flex items-center justify-between text-xs font-semibold mb-3 border-b border-[#1E2638] pb-2">
-        <div className="flex items-center space-x-2">
-          {isLive ? (
-            <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#FF3B30]/20 text-[#FF3B30] border border-[#FF3B30]/40 font-extrabold animate-pulse-live">
-              <span className="w-2 h-2 rounded-full bg-[#FF3B30]"></span>
-              <span>LIVE {match.current_minute && `• ${match.current_minute}`}</span>
-            </span>
-          ) : (
-            <span className={`px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[10px] ${
-              isCompleted ? 'bg-[#1C2333] text-gray-400' : 'bg-[#E5A93C]/10 text-[#E5A93C] border border-[#E5A93C]/30'
-            }`}>
-              {match.status}
-            </span>
-          )}
-          <span className="text-gray-400 font-normal hidden sm:inline">Round {match.round_number}</span>
-        </div>
-
-        <div className="text-gray-400 text-right">
-          <span>{format(new Date(match.match_date), 'MMM dd, HH:mm')}</span>
-        </div>
-      </div>
-
-      {/* Teams Score Grid */}
-      <div className="grid grid-cols-7 items-center gap-2 py-2">
-        {/* Home Team */}
-        <div className="col-span-3 flex items-center justify-end space-x-3 text-right">
-          <span className="font-extrabold text-sm sm:text-base text-white truncate">
-            {match.home_team?.name || 'Home Team'}
+    <Link href={`/matches/${match.id}`} className="block">
+      <div className={`bg-[#141923] rounded-xl border transition-all hover:bg-[#1A2130] group
+        ${match.status === 'Live' ? 'border-[#FF3B30] shadow-[0_0_15px_-3px_rgba(255,59,48,0.2)]' : 'border-[#232B3E] hover:border-[#E5A93C]/50'}`}>
+        
+        {/* Header */}
+        <div className="flex justify-between items-center px-4 py-2 border-b border-[#232B3E] bg-[#0B0E14] rounded-t-xl">
+          <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+            {new Date(match.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} • {match.time}
           </span>
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xs text-black shadow-md flex-shrink-0"
-            style={{ backgroundColor: match.home_team?.color_hex || '#E5A93C' }}
-          >
-            {match.home_team?.short_name || 'HOME'}
-          </div>
+          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border
+            ${match.status === 'Live' ? 'bg-red-500/10 text-red-500 border-red-500/20 animate-pulse' : 
+              match.status === 'Completed' ? 'bg-[#1C2333] text-gray-400 border-transparent' : 
+              'bg-[#1C2333] text-[#E5A93C] border-[#E5A93C]/20'}`}>
+            {match.status}
+          </span>
         </div>
 
-        {/* Score Center */}
-        <div className="col-span-1 flex flex-col items-center justify-center bg-[#0B0E14] py-2 px-1 rounded-lg border border-[#1E2638]">
-          {isLive || isCompleted ? (
-            <div className="text-xl sm:text-2xl font-black tracking-widest text-[#FFC857] flex items-center space-x-1">
-              <span>{match.home_score}</span>
-              <span className="text-gray-600 text-base">-</span>
-              <span>{match.away_score}</span>
+        {/* Body */}
+        <div className="p-4 space-y-3">
+          {/* Home Team */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden">
+                {homeTeam?.logoUrl ? <img src={homeTeam.logoUrl} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] font-bold text-white">{homeTeam?.shortName}</span>}
+              </div>
+              <span className={`font-bold text-sm ${match.status === 'Completed' && match.homeScore > match.awayScore ? 'text-white' : 'text-gray-300'}`}>
+                {homeTeam?.name || 'TBA'}
+              </span>
             </div>
-          ) : (
-            <span className="text-xs font-black text-[#E5A93C] tracking-wider uppercase">VS</span>
-          )}
+            {(match.status === 'Live' || match.status === 'Completed') && (
+              <span className={`font-mono text-sm font-bold ${match.status === 'Completed' && match.homeScore > match.awayScore ? 'text-white' : 'text-gray-400'}`}>
+                {homeScoreStr}
+              </span>
+            )}
+          </div>
+
+          {/* Away Team */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-[#0B0E14] border border-[#2D384E] flex items-center justify-center overflow-hidden">
+                {awayTeam?.logoUrl ? <img src={awayTeam.logoUrl} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] font-bold text-white">{awayTeam?.shortName}</span>}
+              </div>
+              <span className={`font-bold text-sm ${match.status === 'Completed' && match.awayScore > match.homeScore ? 'text-white' : 'text-gray-300'}`}>
+                {awayTeam?.name || 'TBA'}
+              </span>
+            </div>
+            {(match.status === 'Live' || match.status === 'Completed') && (
+              <span className={`font-mono text-sm font-bold ${match.status === 'Completed' && match.awayScore > match.homeScore ? 'text-white' : 'text-gray-400'}`}>
+                {awayScoreStr}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Away Team */}
-        <div className="col-span-3 flex items-center justify-start space-x-3 text-left">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xs text-black shadow-md flex-shrink-0"
-            style={{ backgroundColor: match.away_team?.color_hex || '#0A84FF' }}
-          >
-            {match.away_team?.short_name || 'AWAY'}
+        {/* Footer */}
+        {showDetails && (
+          <div className="px-4 py-2 border-t border-[#232B3E] bg-[#0B0E14]/50 rounded-b-xl text-[11px] font-bold text-gray-500 text-center">
+            {match.status === 'Completed' ? (
+              <span className="text-[#E5A93C]">{resultText}</span>
+            ) : (
+              <span>Match Center →</span>
+            )}
           </div>
-          <span className="font-extrabold text-sm sm:text-base text-white truncate">
-            {match.away_team?.name || 'Away Team'}
-          </span>
-        </div>
+        )}
       </div>
-
-      {/* Footer Info */}
-      {showDetails && (
-        <div className="mt-3 pt-2 border-t border-[#1E2638] flex items-center justify-between text-[11px] text-gray-400">
-          <div className="flex items-center space-x-1 truncate">
-            <svg className="w-3.5 h-3.5 text-[#E5A93C] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className="truncate">{match.venue}</span>
-          </div>
-        </div>
-      )}
-    </div>
+    </Link>
   );
 }

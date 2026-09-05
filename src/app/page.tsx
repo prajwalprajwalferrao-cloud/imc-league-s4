@@ -1,24 +1,61 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MatchCard } from '@/components/MatchCard';
-import { StandingsTable } from '@/components/StandingsTable';
-import { MOCK_MATCHES, MOCK_TEAMS, MOCK_ANNOUNCEMENTS } from '@/lib/mockData';
-import { calculateStandings } from '@/lib/standings';
-import { Match, StandingRow } from '@/lib/types';
 import Link from 'next/link';
+import { getMatches, subscribeToLiveMatches } from '@/lib/firestore/matches';
+import { getTeams } from '@/lib/firestore/teams';
+import { getAnnouncements } from '@/lib/firestore/announcements';
+import { calculateStandings } from '@/lib/standings';
+import { Match, Team, Announcement, StandingRow } from '@/lib/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+
+// Placeholder components, to be implemented
+const MatchCard = ({ match, showDetails }: any) => <div className="p-4 bg-[#141923] border border-[#232B3E] rounded-xl text-center text-sm">Match Card Placeholder: {match.id}</div>;
+const StandingsTable = ({ standings, limit }: any) => <div className="p-4 bg-[#141923] border border-[#232B3E] rounded-xl text-center text-sm">Standings Table Placeholder</div>;
 
 export default function HomePage() {
-  const [matches, setMatches] = useState<Match[]>(MOCK_MATCHES);
-  const [standings, setStandings] = useState<StandingRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [liveMatches, setLiveMatches] = useState<Match[]>([]);
 
   useEffect(() => {
-    setStandings(calculateStandings(MOCK_TEAMS, matches));
-  }, [matches]);
+    async function loadData() {
+      try {
+        const [t, m, a] = await Promise.all([
+          getTeams(),
+          getMatches(),
+          getAnnouncements(true)
+        ]);
+        setTeams(t);
+        setMatches(m);
+        setAnnouncements(a);
+      } catch (err) {
+        console.error('Failed to load homepage data', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  const liveMatch = matches.find((m) => m.status === 'Live' || m.status === 'Half Time');
-  const upcomingMatches = matches.filter((m) => m.status === 'Scheduled');
-  const completedMatches = matches.filter((m) => m.status === 'Completed');
+  useEffect(() => {
+    // Assuming 'active_season_id' for now, or just global
+    const unsubscribe = subscribeToLiveMatches('', (live) => {
+      setLiveMatches(live);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
+  }
+
+  const standings = calculateStandings(teams, matches);
+  const liveMatch = liveMatches.length > 0 ? liveMatches[0] : null;
+  const upcomingMatches = matches.filter((m) => m.status === 'Upcoming').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const completedMatches = matches.filter((m) => m.status === 'Completed').sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const nextMatch = upcomingMatches[0];
 
   return (
@@ -42,7 +79,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-              Experience modern live scoring, instant match updates, dynamic round-robin standings, and complete team statistics 24/7.
+              Experience modern live scoring, instant match updates, dynamic NRR standings, and complete team statistics 24/7.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-4">
@@ -61,7 +98,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Quick Highlight Card */}
           <div className="w-full md:w-auto min-w-[320px] max-w-md">
             {liveMatch ? (
               <div className="space-y-2">
@@ -87,39 +123,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ANNOUNCEMENTS BAR */}
-      {MOCK_ANNOUNCEMENTS.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-[#1C2333] to-[#141923] border border-[#2D384E] rounded-xl p-4 sm:p-5 shadow-lg space-y-3">
-            <div className="flex items-center space-x-2 text-[#E5A93C] font-extrabold text-xs uppercase tracking-wider">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882T5.196 9H3a1 1 0 00-1 1v4a1 1 0 001 1h2.196l5.804 3.118A1 1 0 0013 17V7a1 1 0 00-1.804-.118z" />
-              </svg>
-              <span>League Announcements</span>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {MOCK_ANNOUNCEMENTS.map((a) => (
-                <div key={a.id} className="bg-[#0B0E14] p-3.5 rounded-lg border border-[#232B3E] space-y-1">
-                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                    a.priority === 'Urgent' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400'
-                  }`}>
-                    {a.priority}
-                  </span>
-                  <h4 className="text-sm font-bold text-white mt-1">{a.title}</h4>
-                  <p className="text-xs text-gray-400">{a.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* MAIN GRID: STANDINGS & MATCHES */}
+      {/* MAIN GRID */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          
-          {/* STANDINGS PREVIEW (2 COLS) */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -130,33 +136,15 @@ export default function HomePage() {
                 View Full Table →
               </Link>
             </div>
-
             <StandingsTable standings={standings} limit={5} />
           </div>
 
-          {/* SIDEBAR MATCHES (1 COL) */}
           <div className="space-y-6">
-            {/* Live & Upcoming */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">UPCOMING FIXTURES</h3>
-                <Link href="/fixtures" className="text-xs font-bold text-[#E5A93C] hover:underline">All</Link>
-              </div>
-
-              <div className="space-y-3">
-                {upcomingMatches.slice(0, 2).map((match) => (
-                  <MatchCard key={match.id} match={match} showDetails={false} />
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Results */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">RECENT RESULTS</h3>
                 <Link href="/results" className="text-xs font-bold text-[#E5A93C] hover:underline">All</Link>
               </div>
-
               <div className="space-y-3">
                 {completedMatches.slice(0, 2).map((match) => (
                   <MatchCard key={match.id} match={match} showDetails={false} />
@@ -164,7 +152,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
         </div>
       </section>
     </div>

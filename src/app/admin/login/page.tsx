@@ -1,90 +1,87 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 export default function AdminLoginPage() {
-  const router = Router();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signIn } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    // Demo admin authentication fallback check
-    if (email === 'admin@imcleague.com' && password === 'admin123') {
-      setTimeout(() => {
-        router.push('/admin/dashboard');
-      }, 500);
-    } else {
-      setTimeout(() => {
-        // Direct redirect for initial evaluation
-        router.push('/admin/dashboard');
-      }, 500);
+    setIsSubmitting(true);
+    
+    try {
+      await signIn(email, password);
+      // Set a cookie so the middleware knows we're authenticated
+      document.cookie = "imc-auth=true; path=/; max-age=86400; SameSite=Strict";
+      
+      const redirect = searchParams.get('redirect') || '/admin';
+      router.push(redirect);
+      toast.success('Logged in successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to login');
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-[#141923] border border-[#232B3E] p-8 rounded-2xl shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#E5A93C]/10 rounded-full blur-2xl pointer-events-none"></div>
+    <div className="min-h-screen bg-[#0B0E14] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-white uppercase tracking-wider">
+          Admin Login
+        </h2>
+      </div>
 
-        <div className="text-center space-y-2">
-          <div className="inline-flex w-12 h-12 rounded-xl bg-gradient-to-br from-[#E5A93C] to-[#B37B1D] items-center justify-center font-black text-black text-xl shadow-lg mb-2">
-            IMC
-          </div>
-          <h2 className="text-2xl font-black text-white uppercase tracking-wide">ADMIN LOGIN</h2>
-          <p className="text-xs text-gray-400">Secure entry point for League Administrators</p>
-        </div>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-[#141923] py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-[#232B3E]">
+          <form className="space-y-6" onSubmit={handleLogin}>
+            <div>
+              <label className="block text-sm font-medium text-gray-300">
+                Email address
+              </label>
+              <div className="mt-1">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-[#2D384E] rounded-md shadow-sm bg-[#0B0E14] text-white focus:outline-none focus:ring-[#E5A93C] focus:border-[#E5A93C] sm:text-sm"
+                />
+              </div>
+            </div>
 
-        {error && (
-          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-3 rounded-lg text-xs text-center font-semibold">
-            {error}
-          </div>
-        )}
+            <div>
+              <label className="block text-sm font-medium text-gray-300">
+                Password
+              </label>
+              <div className="mt-1">
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-[#2D384E] rounded-md shadow-sm bg-[#0B0E14] text-white focus:outline-none focus:ring-[#E5A93C] focus:border-[#E5A93C] sm:text-sm"
+                />
+              </div>
+            </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-300 uppercase mb-1">Admin Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@imcleague.com"
-              className="w-full bg-[#0B0E14] border border-[#232B3E] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#E5A93C] transition-colors"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-300 uppercase mb-1">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-[#0B0E14] border border-[#232B3E] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#E5A93C] transition-colors"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-lg bg-gradient-to-r from-[#E5A93C] to-[#B37B1D] text-black font-extrabold text-sm hover:brightness-110 transition-all shadow-lg glow-gold mt-2"
-          >
-            {loading ? 'Authenticating...' : 'Sign In to Console'}
-          </button>
-        </form>
-
-        <div className="text-center pt-2">
-          <p className="text-[11px] text-gray-500">
-            For development preview: submit with default credentials to access the console.
-          </p>
+            <div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-[#E5A93C] hover:bg-[#D49B35] focus:outline-none disabled:opacity-50"
+              >
+                {isSubmitting ? 'Signing in...' : 'Sign in'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

@@ -1,58 +1,112 @@
 'use client';
 
-import React from 'react';
-import { MOCK_MATCHES, MOCK_TEAMS } from '@/lib/mockData';
-import { calculateStandings } from '@/lib/standings';
+import { useEffect, useState } from 'react';
+import { getPlayers } from '@/lib/firestore/players';
+import { getTeams } from '@/lib/firestore/teams';
+import { Player, Team } from '@/lib/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function StatisticsPage() {
-  const standings = calculateStandings(MOCK_TEAMS, MOCK_MATCHES);
-  const leader = standings[0]?.team;
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Record<string, Team>>({});
+  const [loading, setLoading] = useState(true);
 
-  const totalMatchesPlayed = MOCK_MATCHES.filter((m) => m.status === 'Completed').length;
-  const totalGoalsScored = MOCK_MATCHES.reduce((acc, m) => acc + m.home_score + m.away_score, 0);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [p, t] = await Promise.all([getPlayers(), getTeams()]);
+        setPlayers(p);
+        const teamMap: Record<string, Team> = {};
+        t.forEach(team => { teamMap[team.id] = team; });
+        setTeams(teamMap);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) return <div className="py-12"><LoadingSpinner size="lg" /></div>;
+
+  const topScorers = [...players].sort((a, b) => b.runsScored - a.runsScored).slice(0, 10);
+  const topWicketTakers = [...players].sort((a, b) => b.wicketsTaken - a.wicketsTaken).slice(0, 10);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-black text-white tracking-wide uppercase">LEAGUE STATISTICS</h1>
-        <p className="text-xs sm:text-sm text-gray-400">Season 04 key performance metrics and leaderboard insights</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+      <div className="space-y-2 border-b border-[#232B3E] pb-6">
+        <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">League <span className="text-[#E5A93C]">Statistics</span></h1>
+        <p className="text-gray-400 text-sm">Top performers across the tournament.</p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Matches Played" value={totalMatchesPlayed} icon="⚽" />
-        <StatCard title="Total Goals / Points Scored" value={totalGoalsScored} icon="🔥" />
-        <StatCard title="Current League Leader" value={leader?.name || 'N/A'} icon="🏆" highlight />
-        <StatCard title="Active Teams" value={MOCK_TEAMS.length} icon="🛡️" />
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Scorers */}
+        <div className="bg-[#141923] border border-[#232B3E] rounded-xl overflow-hidden shadow-lg">
+          <div className="bg-[#1C2333] px-6 py-4 border-b border-[#2D384E]">
+            <h2 className="text-lg font-black text-[#E5A93C] uppercase tracking-wider">Top Run Scorers</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-[#2D384E]">
+              <thead className="bg-[#0B0E14]">
+                <tr>
+                  <th className="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase">Rank</th>
+                  <th className="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase">Player</th>
+                  <th className="px-6 py-3 text-center text-[10px] font-black text-white uppercase">Runs</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#2D384E]">
+                {topScorers.map((player, index) => (
+                  <tr key={player.id} className="hover:bg-[#1C2333]">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm font-bold text-gray-400">{index + 1}</td>
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <div className="text-sm font-bold text-white">{player.name}</div>
+                      <div className="text-xs text-gray-500">{teams[player.teamId]?.shortName || 'TBA'}</div>
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-center text-sm font-black text-[#E5A93C]">{player.runsScored}</td>
+                  </tr>
+                ))}
+                {topScorers.length === 0 && (
+                  <tr><td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">No data available</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-      {/* Leaderboard Summary */}
-      <div className="bg-[#141923] border border-[#232B3E] rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-extrabold text-white uppercase tracking-wider">Top Performing Squads</h3>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {standings.slice(0, 3).map((item, idx) => (
-            <div key={item.team.id} className="bg-[#0B0E14] border border-[#232B3E] p-4 rounded-lg flex items-center space-x-3">
-              <div className="text-2xl font-black text-[#E5A93C]">#{idx + 1}</div>
-              <div>
-                <h4 className="font-extrabold text-white">{item.team.name}</h4>
-                <p className="text-xs text-gray-400">{item.points} Points • {item.won} Wins</p>
-              </div>
-            </div>
-          ))}
+        {/* Top Wicket Takers */}
+        <div className="bg-[#141923] border border-[#232B3E] rounded-xl overflow-hidden shadow-lg">
+          <div className="bg-[#1C2333] px-6 py-4 border-b border-[#2D384E]">
+            <h2 className="text-lg font-black text-[#E5A93C] uppercase tracking-wider">Top Wicket Takers</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-[#2D384E]">
+              <thead className="bg-[#0B0E14]">
+                <tr>
+                  <th className="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase">Rank</th>
+                  <th className="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase">Player</th>
+                  <th className="px-6 py-3 text-center text-[10px] font-black text-white uppercase">Wickets</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#2D384E]">
+                {topWicketTakers.map((player, index) => (
+                  <tr key={player.id} className="hover:bg-[#1C2333]">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm font-bold text-gray-400">{index + 1}</td>
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <div className="text-sm font-bold text-white">{player.name}</div>
+                      <div className="text-xs text-gray-500">{teams[player.teamId]?.shortName || 'TBA'}</div>
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-center text-sm font-black text-[#E5A93C]">{player.wicketsTaken}</td>
+                  </tr>
+                ))}
+                {topWicketTakers.length === 0 && (
+                  <tr><td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">No data available</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function StatCard({ title, value, icon, highlight }: { title: string; value: string | number; icon: string; highlight?: boolean }) {
-  return (
-    <div className={`bg-[#141923] border ${highlight ? 'border-[#E5A93C] glow-gold' : 'border-[#232B3E]'} rounded-xl p-6 space-y-2`}>
-      <div className="flex items-center justify-between text-gray-400 text-xs font-bold uppercase tracking-wider">
-        <span>{title}</span>
-        <span className="text-xl">{icon}</span>
-      </div>
-      <div className="text-3xl font-black text-white tracking-tight">{value}</div>
     </div>
   );
 }

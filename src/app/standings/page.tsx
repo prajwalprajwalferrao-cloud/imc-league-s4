@@ -1,33 +1,51 @@
 'use client';
 
-import React from 'react';
-import { StandingsTable } from '@/components/StandingsTable';
-import { MOCK_TEAMS, MOCK_MATCHES } from '@/lib/mockData';
+import { useEffect, useState } from 'react';
+import { getTeams } from '@/lib/firestore/teams';
+import { getMatches } from '@/lib/firestore/matches';
 import { calculateStandings } from '@/lib/standings';
+import { Team, Match, StandingRow } from '@/lib/types';
+import StandingsTable from '@/components/StandingsTable';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function StandingsPage() {
-  const standings = calculateStandings(MOCK_TEAMS, MOCK_MATCHES);
+  const [standings, setStandings] = useState<StandingRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [teams, matches] = await Promise.all([getTeams(), getMatches()]);
+        setStandings(calculateStandings(teams, matches));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-black text-white tracking-wide uppercase">LEAGUE STANDINGS</h1>
-        <p className="text-xs sm:text-sm text-gray-400">
-          Official auto-calculated points table for IMC League Season 04
-        </p>
+        <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">League <span className="text-[#E5A93C]">Standings</span></h1>
+        <p className="text-gray-400 text-sm">Official rankings based on Net Run Rate (NRR). Points: Win (2), No Result (1), Loss (0).</p>
       </div>
 
-      <StandingsTable standings={standings} />
-
-      {/* Rules Legend */}
-      <div className="bg-[#141923] border border-[#232B3E] rounded-xl p-4 text-xs text-gray-400 flex flex-wrap gap-4 justify-between">
-        <div><strong className="text-white">P</strong> = Played</div>
-        <div><strong className="text-white">W</strong> = Wins (3 pts)</div>
-        <div><strong className="text-white">D</strong> = Draws (1 pt)</div>
-        <div><strong className="text-white">L</strong> = Losses (0 pts)</div>
-        <div><strong className="text-white">GF</strong> = Goals For</div>
-        <div><strong className="text-white">GA</strong> = Goals Against</div>
-        <div><strong className="text-white">GD</strong> = Goal Difference</div>
+      {loading ? (
+        <LoadingSpinner size="lg" />
+      ) : (
+        <StandingsTable standings={standings} />
+      )}
+      
+      <div className="bg-[#141923] p-4 rounded-lg border border-[#232B3E] mt-8 text-xs text-gray-400 space-y-2">
+        <h4 className="font-bold text-white uppercase">Tie-breaking Rules:</h4>
+        <ol className="list-decimal list-inside space-y-1">
+          <li>Total Points</li>
+          <li>Net Run Rate (NRR)</li>
+          <li>Total Runs Scored</li>
+        </ol>
       </div>
     </div>
   );
