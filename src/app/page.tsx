@@ -58,11 +58,17 @@ export default function HomePage() {
   return (
     <div className="space-y-16 pb-16">
       {/* ═══════ HERO ═══════ */}
-      <section className="relative overflow-hidden min-h-[520px] flex items-center">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#141923] via-[#0D111A] to-[#0B0E14]" />
-        <div className="absolute top-[-200px] right-[-100px] w-[600px] h-[600px] bg-[#E5A93C]/5 rounded-full blur-[120px] animate-float" />
-        <div className="absolute bottom-[-100px] left-[-50px] w-[400px] h-[400px] bg-[#E5A93C]/3 rounded-full blur-[100px]" />
+      <section className="relative overflow-hidden min-h-[560px] flex items-center">
+        {/* Poster image background with gradient overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-25 scale-105 transition-transform duration-1000"
+          style={{ backgroundImage: `url('/poster.jpg')` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0E14] via-[#0B0E14]/90 to-[#0B0E14]/70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-[#0B0E14]/80" />
+        <div className="absolute top-[-200px] right-[-100px] w-[600px] h-[600px] bg-[#E5A93C]/10 rounded-full blur-[140px] animate-float" />
+        <div className="absolute bottom-[-100px] left-[-50px] w-[400px] h-[400px] bg-[#E5A93C]/5 rounded-full blur-[100px]" />
+        
         {/* Grid pattern overlay */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, #E5A93C 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
